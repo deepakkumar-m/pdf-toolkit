@@ -45,7 +45,7 @@ A modern, professional PDF toolkit similar to LightPDF, built with Next.js 15, T
 
 1. **Clone the repository**
    \`\`\`bash
-   git clone https://github.com/your-username/pdf-toolkit.git
+   git clone https://github.com/deepakkumar-m/pdf-toolkit.git
    cd pdf-toolkit
    \`\`\`
 
@@ -198,8 +198,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@pdftoolkit.com or join our [Discord community](https://discord.gg/pdftoolkit).
+For support, email support@pdftoolkit.com
 
 ---
 
-Built with ❤️ by [Your Name](https://github.com/your-username)
+Built with ❤️ by [Your Name](https://github.com/deepakkumar-m)
