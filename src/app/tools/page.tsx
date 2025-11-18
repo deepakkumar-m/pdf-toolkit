@@ -94,8 +94,7 @@ const allTools = [
     description: 'Extract text from scanned PDFs and images using advanced OCR technology',
     icon: Scan,
     color: 'bg-orange-100 text-orange-600',
-    category: 'Convert',
-    comingSoon: true
+    category: 'Convert'
   },
   {
     id: 'protect-pdf',
