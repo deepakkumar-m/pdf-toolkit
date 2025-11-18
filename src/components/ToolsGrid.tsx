@@ -65,12 +65,11 @@ const tools = [
     comingSoon: true
   },
   {
-    id: 'ocr',
-    title: 'OCR',
-    description: 'Extract text from scanned documents',
+    id: 'ocr-pdf',
+    title: 'OCR PDF',
+    description: 'Extract text from scanned documents and images',
     icon: Scan,
-    color: 'bg-orange-100 text-orange-600',
-    comingSoon: true
+    color: 'bg-orange-100 text-orange-600'
   },
   {
     id: 'pdf-to-jpg',
@@ -132,8 +131,8 @@ export default function ToolsGrid() {
             Most Popular PDF Tools
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Professional PDF processing tools powered by AI. Convert, edit, and manipulate 
-            your documents with industry-leading accuracy and speed.
+            Professional PDF processing tools for all your document needs. Convert, edit, and manipulate 
+            your documents with ease and complete privacy.
           </p>
         </motion.div>
 
