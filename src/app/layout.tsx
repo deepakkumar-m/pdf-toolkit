@@ -5,9 +5,9 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PDF Toolkit - AI-Powered PDF Processing',
-  description: 'Professional PDF toolkit with AI integration for converting, editing, merging, compressing, and processing PDF documents online.',
-  keywords: 'PDF, convert, edit, merge, compress, AI, OCR, document processing',
+  title: 'PDF Toolkit - Free Online PDF Tools',
+  description: 'Professional PDF toolkit for converting, editing, merging, compressing, and processing PDF documents online. Fast, secure, and privacy-focused.',
+  keywords: 'PDF, convert, edit, merge, compress, split, rotate, protect, OCR, document processing, free PDF tools',
 }
 
 export default function RootLayout({

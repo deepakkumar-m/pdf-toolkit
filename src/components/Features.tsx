@@ -41,11 +41,17 @@ export default function Features() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Will uploaded files be saved?
+            Your Privacy Matters
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            <strong className="text-red-600">NO</strong> — Your uploaded files are NOT saved anywhere. All processing happens securely in memory.
+            We process your PDFs with <strong>complete privacy</strong>. No storage, no tracking, no data collection.
           </p>
+          <div className="mt-4">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full text-purple-700 text-sm font-medium">
+              <span className="animate-pulse">✨</span>
+              AI Features Coming Soon
+            </span>
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

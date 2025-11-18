@@ -17,21 +17,21 @@ export default function Hero() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-4xl mx-auto"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full text-blue-700 text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4" />
-            AI-Powered PDF Processing
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full text-green-700 text-sm font-medium mb-6">
+            <Shield className="w-4 h-4" />
+            100% Private & Secure
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Professional PDF Toolkit
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent block">
-              Powered by AI
+              Fast, Free & Private
             </span>
           </h1>
           
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Convert, edit, merge, compress, and chat with your PDF documents using our advanced AI-powered tools. 
-            Process documents instantly with professional-grade results.
+            Convert, edit, merge, compress, and manage your PDF documents with complete privacy. 
+            All processing happens in your browser—no files stored, no data collected.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -51,11 +51,11 @@ export default function Hero() {
           <div className="flex items-center justify-center gap-8 text-sm text-gray-500">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
-              Secure Processing
+              100% Private
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              AI-Enhanced
+              <Upload className="w-4 h-4" />
+              No File Storage
             </div>
             <div>Free to Use</div>
           </div>
