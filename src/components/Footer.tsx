@@ -10,13 +10,13 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         {/* Author Section */}
         <div className="flex flex-col items-center mb-8">
-          <div className="relative w-24 h-24 mb-4 overflow-hidden rounded-full border-4 border-gray-700">
+          <div className="relative mb-4 h-28 w-28 rounded-full overflow-hidden border-4 border-gray-700">
             <Image
               src="/author.png"
-              alt="Deepak Kumar"
-              width={96}
-              height={96}
-              className="object-cover"
+              alt="Profile photo"
+              width={112}
+              height={112}
+              className="object-cover w-full h-full object-center"
               priority
             />
           </div>
