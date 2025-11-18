@@ -205,6 +205,8 @@ export default function CompressPdfPage() {
                         </div>
                       </div>
 
+                      {/* Method removed: always use Server (Ghostscript) for clarity */}
+
                       {/* File Info */}
                       {pdfInfo && (
                         <div>
