@@ -296,7 +296,7 @@ export default function RotatePdfPage() {
                   </div>
                   <div className="flex gap-3">
                     <span className="font-semibold text-yellow-600 min-w-[24px]">4.</span>
-                    <p><strong>Download:</strong> Click "Rotate PDF" to save your rotated document. The file will download automatically.</p>
+                    <p><strong>Download:</strong> Click &quot;Rotate PDF&quot; to save your rotated document. The file will download automatically.</p>
                   </div>
                   <div className="mt-4 p-3 bg-yellow-50 rounded-md border border-yellow-200">
                     <p className="text-sm text-yellow-800">

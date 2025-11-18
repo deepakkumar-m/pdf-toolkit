@@ -270,7 +270,7 @@ export default function DecryptPdfPage() {
                   </div>
                   <div className="flex gap-3">
                     <span className="font-semibold text-green-600 min-w-[24px]">3.</span>
-                    <p><strong>Decrypt:</strong> Click the "Decrypt PDF" button or press Enter. The tool will remove the password protection.</p>
+                    <p><strong>Decrypt:</strong> Click the &quot;Decrypt PDF&quot; button or press Enter. The tool will remove the password protection.</p>
                   </div>
                   <div className="flex gap-3">
                     <span className="font-semibold text-green-600 min-w-[24px]">4.</span>

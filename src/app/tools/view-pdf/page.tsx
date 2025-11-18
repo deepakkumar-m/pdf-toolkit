@@ -52,7 +52,7 @@ export default function ViewPdfPage() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [uploadedFile, numPages, pageNumber])
+  }, [uploadedFile, numPages, pageNumber, changePage])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -158,7 +158,7 @@ export default function ViewPdfPage() {
                 <ul className="text-sm text-gray-600 space-y-1">
                   <li>• Use Left/Right arrow keys to navigate pages.</li>
                   <li>• Cmd/Ctrl + Plus/Minus to zoom, Cmd/Ctrl + 0 to reset.</li>
-                  <li>• Toggle "Fit to width" for a comfortable reading size.</li>
+                  <li>• Toggle &quot;Fit to width&quot; for a comfortable reading size.</li>
                 </ul>
               </CardContent>
             </Card>
