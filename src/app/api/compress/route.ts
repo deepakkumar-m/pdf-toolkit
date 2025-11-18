@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File
-    const compressionLevel = formData.get('compressionLevel') as string || 'balanced'
-    
+    const compressionLevel = (formData.get('compressionLevel') as string) || 'medium'
+
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
@@ -30,19 +30,14 @@ export async function POST(req: NextRequest) {
     const outputPath = path.join('/tmp', `output-${Date.now()}.pdf`)
     await writeFile(inputPath, Buffer.from(arrayBuffer))
 
-    // Map compressionLevel to Ghostscript PDFSETTINGS and DPI
+    // Map compressionLevel to Ghostscript PDFSETTINGS and DPI downsampling
+    // /printer ~ low compression (best quality), /ebook ~ medium, /screen ~ high compression
     let gsLevel = '/ebook'
     let dpi = 120
-    if (compressionLevel === 'high-quality') {
+    if (compressionLevel === 'low') {
       gsLevel = '/printer'
       dpi = 200
-    } else if (compressionLevel === 'balanced') {
-      gsLevel = '/ebook'
-      dpi = 120
-    } else if (compressionLevel === 'small-size') {
-      gsLevel = '/screen'
-      dpi = 90
-    } else if (compressionLevel === 'extreme') {
+    } else if (compressionLevel === 'high') {
       gsLevel = '/screen'
       dpi = 72
     }
@@ -64,11 +59,11 @@ export async function POST(req: NextRequest) {
     const compressedBuffer = await readFile(outputPath)
     const originalSize = file.size
     const compressedSize = compressedBuffer.length
-    const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1)
+    const compressionRatio = (((originalSize - compressedSize) / originalSize) * 100).toFixed(1)
 
     // Clean up temp files
-    await unlink(inputPath)
-    await unlink(outputPath)
+    await unlink(inputPath).catch(() => {})
+    await unlink(outputPath).catch(() => {})
 
     return new NextResponse(Buffer.from(compressedBuffer), {
       headers: {
@@ -80,17 +75,15 @@ export async function POST(req: NextRequest) {
         'X-Compression-Effective': (compressedSize < originalSize).toString(),
       },
     })
-    
   } catch (error) {
     console.error('Compression error:', error)
     const message = (error as Error)?.message || ''
     if (message.includes('ENOENT') || message.includes('not found')) {
-      return NextResponse.json({ 
-        error: 'Ghostscript (gs) is not installed. Please install it: brew install ghostscript' 
+      return NextResponse.json({
+        error:
+          'Ghostscript (gs) is not installed or not available in PATH. Install Ghostscript (brew install ghostscript) or set env GS_EXEC to the gs binary path.'
       }, { status: 500 })
     }
-    return NextResponse.json({ 
-      error: 'Failed to compress PDF. Please ensure the file is a valid PDF.' 
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to compress PDF. Please ensure the file is a valid PDF.' }, { status: 500 })
   }
 }

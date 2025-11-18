@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import FileUpload from '@/components/FileUpload'
 
-type CompressionLevel = 'high-quality' | 'balanced' | 'small-size' | 'extreme'
-
 interface CompressionResult {
   success: boolean
   originalSize: number
@@ -20,7 +18,7 @@ interface CompressionResult {
 
 export default function CompressPdfPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('balanced')
+  const [compressionLevel, setCompressionLevel] = useState<'low' | 'medium' | 'high'>('medium')
   const [isProcessing, setIsProcessing] = useState(false)
   const [result, setResult] = useState<CompressionResult | null>(null)
   const [pdfInfo, setPdfInfo] = useState<any>(null)
@@ -52,7 +50,6 @@ export default function CompressPdfPage() {
     if (!uploadedFile) return
 
     setIsProcessing(true)
-    setResult(null)
 
     try {
       const formData = new FormData()
@@ -85,7 +82,7 @@ export default function CompressPdfPage() {
       }
     } catch (error) {
       console.error('Error compressing PDF:', error)
-      alert((error as Error).message || 'Failed to compress PDF. Please try again.')
+      alert('Failed to compress PDF. Please try again.')
     } finally {
       setIsProcessing(false)
     }
@@ -198,7 +195,7 @@ export default function CompressPdfPage() {
                                 name="compressionLevel"
                                 value={level.value}
                                 checked={compressionLevel === level.value}
-                                onChange={(e) => setCompressionLevel(e.target.value as CompressionLevel)}
+                                onChange={(e) => setCompressionLevel(e.target.value as 'low' | 'medium' | 'high')}
                                 className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                               />
                               <label htmlFor={level.value} className="ml-3 block">
@@ -209,6 +206,8 @@ export default function CompressPdfPage() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Algorithm selection removed – server (Ghostscript) is always used */}
 
                       {/* File Info */}
                       {pdfInfo && (
@@ -236,6 +235,8 @@ export default function CompressPdfPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Progress UI removed – handled by server */}
 
                     <div className="mt-6">
                       <Button
@@ -288,7 +289,7 @@ export default function CompressPdfPage() {
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {result.compressionRatio}%
+                          {Number(result.compressionRatio).toFixed(1)}%
                         </div>
                         <div className="text-sm text-gray-500">Reduction</div>
                       </div>
