@@ -173,7 +173,7 @@ export async function performSmartCompression(
           canvas.height = newHeight
 
           const img = new Image()
-          const imageUrl = URL.createObjectURL(new Blob([imageBytes]))
+          const imageUrl = URL.createObjectURL(new Blob([imageBytes as any]))
 
           await new Promise<void>((resolve, reject) => {
             img.onload = () => resolve()
