@@ -12,7 +12,8 @@ import {
   Eye, 
   MessageSquare, 
   Scan, 
-  Lock, 
+  Lock,
+  Unlock, 
   RotateCw, 
   Scissors, 
   Image,
@@ -57,7 +58,8 @@ const allTools = [
     icon: MessageSquare,
     color: 'bg-purple-100 text-purple-600',
     category: 'AI Tools',
-    popular: true
+    popular: true,
+    comingSoon: true
   },
   {
     id: 'edit-pdf',
@@ -66,7 +68,8 @@ const allTools = [
     icon: Edit3,
     color: 'bg-green-100 text-green-600',
     category: 'Edit',
-    popular: true
+    popular: true,
+    comingSoon: true
   },
   {
     id: 'pdf-to-jpg',
@@ -82,7 +85,8 @@ const allTools = [
     description: 'Convert Microsoft Word documents to PDF format instantly',
     icon: Download,
     color: 'bg-emerald-100 text-emerald-600',
-    category: 'Convert'
+    category: 'Convert',
+    comingSoon: true
   },
   {
     id: 'ocr-pdf',
@@ -90,7 +94,8 @@ const allTools = [
     description: 'Extract text from scanned PDFs and images using advanced OCR technology',
     icon: Scan,
     color: 'bg-orange-100 text-orange-600',
-    category: 'Convert'
+    category: 'Convert',
+    comingSoon: true
   },
   {
     id: 'protect-pdf',
@@ -98,6 +103,14 @@ const allTools = [
     description: 'Add password protection and encryption to secure your PDF documents',
     icon: Lock,
     color: 'bg-gray-100 text-gray-600',
+    category: 'Security'
+  },
+  {
+    id: 'decrypt-pdf',
+    title: 'Decrypt PDF',
+    description: 'Remove password protection from encrypted PDF files instantly',
+    icon: Unlock,
+    color: 'bg-green-100 text-green-600',
     category: 'Security'
   },
   {
@@ -164,7 +177,10 @@ export default function ToolsPage() {
 
         {/* Tools Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {allTools.map((tool, index) => {
+          {allTools
+            .slice()
+            .sort((a: any, b: any) => (a.comingSoon ? 1 : 0) - (b.comingSoon ? 1 : 0))
+            .map((tool, index) => {
             const IconComponent = tool.icon
             return (
               <motion.div
@@ -174,13 +190,16 @@ export default function ToolsPage() {
                 transition={{ duration: 0.6, delay: index * 0.05 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
-                <Link href={`/tools/${tool.id}`}>
-                  <Card className="h-full cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200 relative group">
+                {tool.comingSoon ? (
+                  <Card className="h-full opacity-60 cursor-not-allowed transition-all duration-300 border-2 relative group" aria-disabled>
                     {tool.popular && (
                       <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
                         Popular
                       </div>
                     )}
+                    <div className="absolute -top-2 -left-2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-full font-medium z-10">
+                      Coming Soon
+                    </div>
                     <CardContent className="p-6">
                       <div className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                         <IconComponent className="w-6 h-6" />
@@ -200,7 +219,35 @@ export default function ToolsPage() {
                       </p>
                     </CardContent>
                   </Card>
-                </Link>
+                ) : (
+                  <Link href={`/tools/${tool.id}`}>
+                    <Card className="h-full cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200 relative group">
+                      {tool.popular && (
+                        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-medium z-10">
+                          Popular
+                        </div>
+                      )}
+                      <CardContent className="p-6">
+                        <div className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                          <IconComponent className="w-6 h-6" />
+                        </div>
+                        
+                        <div className="mb-3">
+                          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                            {tool.category}
+                          </span>
+                        </div>
+                        
+                        <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                          {tool.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          {tool.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )}
               </motion.div>
             )
           })}

@@ -11,7 +11,8 @@ import {
   Eye, 
   MessageSquare, 
   Scan, 
-  Lock, 
+  Lock,
+  Unlock, 
   RotateCw, 
   Scissors, 
   Image
@@ -51,7 +52,8 @@ const tools = [
     description: 'AI-powered document analysis and Q&A',
     icon: MessageSquare,
     color: 'bg-purple-100 text-purple-600',
-    popular: true
+    popular: true,
+    comingSoon: true
   },
   {
     id: 'edit-pdf',
@@ -59,14 +61,16 @@ const tools = [
     description: 'Add text, images, and annotations',
     icon: Edit3,
     color: 'bg-green-100 text-green-600',
-    popular: true
+    popular: true,
+    comingSoon: true
   },
   {
     id: 'ocr',
     title: 'OCR',
     description: 'Extract text from scanned documents',
     icon: Scan,
-    color: 'bg-orange-100 text-orange-600'
+    color: 'bg-orange-100 text-orange-600',
+    comingSoon: true
   },
   {
     id: 'pdf-to-jpg',
@@ -90,6 +94,13 @@ const tools = [
     color: 'bg-gray-100 text-gray-600'
   },
   {
+    id: 'decrypt-pdf',
+    title: 'Decrypt PDF',
+    description: 'Remove password from encrypted PDFs',
+    icon: Unlock,
+    color: 'bg-green-100 text-green-600'
+  },
+  {
     id: 'view-pdf',
     title: 'View PDF',
     description: 'Online PDF viewer and reader',
@@ -101,7 +112,8 @@ const tools = [
     title: 'Word to PDF',
     description: 'Convert Word documents to PDF',
     icon: Download,
-    color: 'bg-emerald-100 text-emerald-600'
+    color: 'bg-emerald-100 text-emerald-600',
+    comingSoon: true
   }
 ]
 
@@ -126,7 +138,10 @@ export default function ToolsGrid() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {tools.map((tool, index) => {
+          {tools
+            .slice()
+            .sort((a: any, b: any) => (a.comingSoon ? 1 : 0) - (b.comingSoon ? 1 : 0))
+            .map((tool, index) => {
             const IconComponent = tool.icon
             return (
               <motion.div
@@ -139,12 +154,22 @@ export default function ToolsGrid() {
                 className="group"
               >
                 <Card 
-                  className="h-full cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-blue-200 relative"
-                  onClick={() => window.location.href = `/tools/${tool.id}`}
+                  className={`h-full transition-all duration-300 border-2 relative ${tool.comingSoon ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg hover:border-blue-200'}`}
+                  onClick={() => {
+                    if (!tool.comingSoon) {
+                      window.location.href = `/tools/${tool.id}`
+                    }
+                  }}
+                  aria-disabled={tool.comingSoon ? true : undefined}
                 >
                   {tool.popular && (
                     <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                       Popular
+                    </div>
+                  )}
+                  {tool.comingSoon && (
+                    <div className="absolute -top-2 -left-2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-full font-medium">
+                      Coming Soon
                     </div>
                   )}
                   <CardContent className="p-6 text-center">

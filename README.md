@@ -45,7 +45,7 @@ A modern, professional PDF toolkit similar to LightPDF, built with Next.js 15, T
 
 1. **Clone the repository**
    \`\`\`bash
-   git clone https://github.com/deepakkumar-m/pdf-toolkit.git
+   git clone https://github.com/your-username/pdf-toolkit.git
    cd pdf-toolkit
    \`\`\`
 
@@ -126,6 +126,39 @@ Configured for optimal performance with:
 
 ## 🌐 Deployment
 
+### Render (real PDF compression)
+This app uses Ghostscript for real PDF compression in `src/app/api/compress/route.ts`. Ensure Ghostscript is installed.
+
+Option A — Render Native (no Docker):
+
+- Build Command:
+  
+   ```bash
+   apt-get update && apt-get install -y ghostscript && npm ci && npm run build
+   ```
+
+- Start Command:
+  
+   ```bash
+   npm run start
+   ```
+
+Option B — Docker on Render (recommended):
+
+```dockerfile
+FROM node:18-bullseye
+RUN apt-get update && apt-get install -y ghostscript && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+Optional: If Ghostscript is installed with a non-standard binary name or path, set the env var `GS_EXEC` to the full path (defaults to `gs`).
+
 ### Vercel (Recommended)
 \`\`\`bash
 npm i -g vercel
@@ -198,8 +231,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@pdftoolkit.com
+For support, email support@pdftoolkit.com or join our [Discord community](https://discord.gg/pdftoolkit).
 
 ---
 
-Built with ❤️ by [Your Name](https://github.com/deepakkumar-m)
+Built with ❤️ by [Your Name](https://github.com/your-username)
