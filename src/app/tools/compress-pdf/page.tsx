@@ -184,10 +184,9 @@ export default function CompressPdfPage() {
                         </label>
                         <div className="space-y-3">
                           {[
-                            { value: 'high-quality', label: 'High Quality', desc: 'Best quality, larger file' },
-                            { value: 'balanced', label: 'Balanced', desc: 'Great balance of quality and size' },
-                            { value: 'small-size', label: 'Small Size', desc: 'Smaller file, good quality' },
-                            { value: 'extreme', label: 'Extreme', desc: 'Maximum compression' }
+                            { value: 'low', label: 'Low', desc: 'Minimal compression, best quality' },
+                            { value: 'medium', label: 'Medium', desc: 'Balanced compression and quality' },
+                            { value: 'high', label: 'High', desc: 'Maximum compression, smaller file' }
                           ].map((level) => (
                             <div key={level.value} className="flex items-center">
                               <input
