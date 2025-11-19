@@ -59,34 +59,86 @@ export default function CompressPdfPage() {
   const handleCompress = async () => {
     if (!uploadedFile) return
     setIsProcessing(true)
-    setProgress(0)
-    setProgressStatus('Starting...')
     setResult(null)
+    setProgressStatus('Using Ghostscript server compression...')
+    setProgress(0)
     try {
-      const preset = mapLevelToPreset(compressionLevel)
-      const res = await compressPDF(
-        uploadedFile,
-        preset,
-        'auto',
-        (p, status) => {
-          setProgress(p)
-          setProgressStatus(status)
-        }
-      )
-      const blob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
-      const url = URL.createObjectURL(blob)
-      setResult({
-        success: true,
-        originalSize: res.originalSize,
-        compressedSize: res.compressedSize,
-        compressionRatio: res.compressionRatio,
-        downloadUrl: url
-      })
-      setProgress(100)
-      setProgressStatus('Done')
+      const formData = new FormData()
+      formData.append('file', uploadedFile)
+      formData.append('compressionLevel', compressionLevel)
+      const response = await fetch('/api/compress', { method: 'POST', body: formData })
+
+      if (response.ok) {
+        const originalSize = Number(response.headers.get('X-Original-Size') || '0')
+        const compressedSize = Number(response.headers.get('X-Compressed-Size') || '0')
+        const ratioHeader = response.headers.get('X-Compression-Ratio') || '0'
+        const compressionRatio = Number(ratioHeader) // already percentage number
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        setResult({
+          success: true,
+          originalSize,
+            compressedSize,
+          compressionRatio,
+          downloadUrl: url
+        })
+        setProgress(100)
+        setProgressStatus('Server compression complete')
+      } else {
+        // Fallback to client-side compression
+        setProgressStatus('Ghostscript unavailable. Falling back to local browser compression...')
+        const preset = mapLevelToPreset(compressionLevel)
+        const res = await compressPDF(
+          uploadedFile,
+          preset,
+          'auto',
+          (p, status) => {
+            setProgress(p)
+            setProgressStatus(status)
+          }
+        )
+        const blob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+        setResult({
+          success: true,
+          originalSize: res.originalSize,
+          compressedSize: res.compressedSize,
+          compressionRatio: res.compressionRatio,
+          downloadUrl: url
+        })
+        setProgress(100)
+        setProgressStatus('Local compression complete')
+      }
     } catch (e) {
-      console.error('Error compressing PDF:', e)
-      alert('Compression failed: ' + (e instanceof Error ? e.message : 'Unknown error'))
+      console.error('Compression error:', e)
+      try {
+        // Attempt client fallback if server path threw before response.ok check
+        setProgressStatus('Error on server. Attempting local compression...')
+        const preset = mapLevelToPreset(compressionLevel)
+        const res = await compressPDF(
+          uploadedFile,
+          preset,
+          'auto',
+          (p, status) => {
+            setProgress(p)
+            setProgressStatus(status)
+          }
+        )
+        const blob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
+        const url = URL.createObjectURL(blob)
+        setResult({
+          success: true,
+          originalSize: res.originalSize,
+          compressedSize: res.compressedSize,
+          compressionRatio: res.compressionRatio,
+          downloadUrl: url
+        })
+        setProgress(100)
+        setProgressStatus('Local compression complete')
+      } catch (fallbackErr) {
+        console.error('Fallback compression failed:', fallbackErr)
+        alert('Compression failed: ' + (fallbackErr instanceof Error ? fallbackErr.message : 'Unknown error'))
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -132,7 +184,7 @@ export default function CompressPdfPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Compress PDF</h1>
-              <p className="text-gray-600">Reduce PDF file size without losing quality</p>
+              <p className="text-gray-600">Reduce PDF file size. Uses Ghostscript on server when available, otherwise compresses privately in-browser.</p>
             </div>
           </div>
         </div>
