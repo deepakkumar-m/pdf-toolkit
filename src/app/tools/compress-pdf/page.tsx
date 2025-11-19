@@ -7,12 +7,13 @@ import { ArrowLeft, Minimize2, Download, Settings, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import FileUpload from '@/components/FileUpload'
+import { compressPDF } from '@/lib/pdfCompression'
 
 interface CompressionResult {
   success: boolean
   originalSize: number
   compressedSize: number
-  compressionRatio: string
+  compressionRatio: number
   downloadUrl: string
 }
 
@@ -46,44 +47,46 @@ export default function CompressPdfPage() {
     }
   }
 
+  const [progress, setProgress] = useState(0)
+  const [progressStatus, setProgressStatus] = useState('')
+
+  const mapLevelToPreset = (level: 'low' | 'medium' | 'high'): 'high-quality' | 'balanced' | 'small-size' => {
+    if (level === 'low') return 'high-quality'
+    if (level === 'medium') return 'balanced'
+    return 'small-size'
+  }
+
   const handleCompress = async () => {
     if (!uploadedFile) return
-
     setIsProcessing(true)
-
+    setProgress(0)
+    setProgressStatus('Starting...')
+    setResult(null)
     try {
-      const formData = new FormData()
-      formData.append('file', uploadedFile)
-      formData.append('compressionLevel', compressionLevel)
-
-      const response = await fetch('/api/compress', {
-        method: 'POST',
-        body: formData,
+      const preset = mapLevelToPreset(compressionLevel)
+      const res = await compressPDF(
+        uploadedFile,
+        preset,
+        'auto',
+        (p, status) => {
+          setProgress(p)
+          setProgressStatus(status)
+        }
+      )
+      const blob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      setResult({
+        success: true,
+        originalSize: res.originalSize,
+        compressedSize: res.compressedSize,
+        compressionRatio: res.compressionRatio,
+        downloadUrl: url
       })
-
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        
-        const originalSize = parseInt(response.headers.get('X-Original-Size') || '0')
-        const compressedSize = parseInt(response.headers.get('X-Compressed-Size') || '0')
-        const compressionRatio = response.headers.get('X-Compression-Ratio') || '0'
-        
-        setResult({
-          success: true,
-          originalSize,
-          compressedSize,
-          compressionRatio,
-          downloadUrl: url
-        })
-      } else {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || 'Compression failed')
-      }
-    } catch (error) {
-      console.error('Error compressing PDF:', error)
-      const msg = error instanceof Error ? error.message : 'Failed to compress PDF. Please try again.'
-      alert(msg)
+      setProgress(100)
+      setProgressStatus('Done')
+    } catch (e) {
+      console.error('Error compressing PDF:', e)
+      alert('Compression failed: ' + (e instanceof Error ? e.message : 'Unknown error'))
     } finally {
       setIsProcessing(false)
     }
@@ -184,9 +187,9 @@ export default function CompressPdfPage() {
                         </label>
                         <div className="space-y-3">
                           {[
-                            { value: 'low', label: 'Low', desc: 'Minimal compression, best quality' },
-                            { value: 'medium', label: 'Medium', desc: 'Balanced compression and quality' },
-                            { value: 'high', label: 'High', desc: 'Maximum compression, smaller file' }
+                            { value: 'low', label: 'Low', desc: 'Best quality, larger file' },
+                            { value: 'medium', label: 'Medium', desc: 'Balanced size & quality' },
+                            { value: 'high', label: 'High', desc: 'Smaller file, more compression' }
                           ].map((level) => (
                             <div key={level.value} className="flex items-center">
                               <input
@@ -236,7 +239,20 @@ export default function CompressPdfPage() {
                       )}
                     </div>
 
-                    {/* Progress UI removed – handled by server */}
+                    {isProcessing && (
+                      <div className="mt-6 bg-blue-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">{progressStatus}</span>
+                          <span className="text-sm font-medium text-blue-600">{progress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-6">
                       <Button
@@ -289,7 +305,7 @@ export default function CompressPdfPage() {
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {Number(result.compressionRatio).toFixed(1)}%
+                          {result.compressionRatio.toFixed(1)}%
                         </div>
                         <div className="text-sm text-gray-500">Reduction</div>
                       </div>
