@@ -72,18 +72,49 @@ export default function CompressPdfPage() {
         const originalSize = Number(response.headers.get('X-Original-Size') || '0')
         const compressedSize = Number(response.headers.get('X-Compressed-Size') || '0')
         const ratioHeader = response.headers.get('X-Compression-Ratio') || '0'
-        const compressionRatio = Number(ratioHeader) // already percentage number
+        const compressionRatio = Number(ratioHeader) // percentage
         const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        setResult({
-          success: true,
-          originalSize,
+
+        // If user selected high and reduction is small (<8%), attempt second pass client recompression
+        if (compressionLevel === 'high' && compressionRatio < 8 && compressedSize < originalSize) {
+          setProgressStatus('Running extra image recompression pass in browser...')
+          setProgress(10)
+          const intermediateFile = new File([blob], `server-compressed-${uploadedFile.name}`, { type: 'application/pdf' })
+          const preset = mapLevelToPreset('high')
+          const res = await compressPDF(
+            intermediateFile,
+            preset,
+            'smart',
+            (p, status) => {
+              // scale progress 10-95
+              const scaled = 10 + (p * 0.85)
+              setProgress(Math.min(95, Math.round(scaled)))
+              setProgressStatus(status)
+            }
+          )
+          const finalBlob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
+          const finalUrl = URL.createObjectURL(finalBlob)
+          setResult({
+            success: true,
+            originalSize: res.originalSize, // original of second pass input
+            compressedSize: res.compressedSize,
+            compressionRatio: res.compressionRatio,
+            downloadUrl: finalUrl
+          })
+          setProgress(100)
+          setProgressStatus('Multi-pass compression complete')
+        } else {
+          const url = URL.createObjectURL(blob)
+          setResult({
+            success: true,
+            originalSize,
             compressedSize,
-          compressionRatio,
-          downloadUrl: url
-        })
-        setProgress(100)
-        setProgressStatus('Server compression complete')
+            compressionRatio,
+            downloadUrl: url
+          })
+          setProgress(100)
+          setProgressStatus('Server compression complete')
+        }
       } else {
         // Fallback to client-side compression
         setProgressStatus('Ghostscript unavailable. Falling back to local browser compression...')

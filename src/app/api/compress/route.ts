@@ -39,12 +39,12 @@ export async function POST(req: NextRequest) {
       dpi = 200
     } else if (compressionLevel === 'high') {
       gsLevel = '/screen'
-      dpi = 72
+      dpi = 50 // more aggressive downsample for high
     }
 
     const gsBin = process.env.GS_EXEC || 'gs'
     const gsCmd = `${gsBin} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=${gsLevel} \
-      -dCompressFonts=true -dSubsetFonts=true \
+      -dCompressFonts=true -dSubsetFonts=true -dEncodeColorImages=true -dEncodeGrayImages=true -dEncodeMonoImages=true \
       -dDetectDuplicateImages=true \
       -dDownsampleColorImages=true -dColorImageDownsampleType=/Bicubic -dColorImageResolution=${dpi} \
       -dDownsampleGrayImages=true -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=${dpi} \
