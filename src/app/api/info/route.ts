@@ -13,16 +13,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    if (file.type !== 'application/pdf') {
-      return NextResponse.json({ error: 'Invalid file type. Please upload a PDF file.' }, { status: 400 })
-    }
-
     if (file.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json({ error: 'File too large. Max 200 MB per file.' }, { status: 413 })
     }
 
+    // Read bytes early for signature check / fallback MIME detection
     const arrayBuffer = await file.arrayBuffer()
-    const pdfDoc = await PDFDocument.load(arrayBuffer)
+    const header = new Uint8Array(arrayBuffer.slice(0, 8))
+    const headerText = new TextDecoder().decode(header)
+    const looksLikePdf = headerText.startsWith('%PDF')
+    const nameLooksPdf = /\.pdf$/i.test(file.name || '')
+    const declaredPdf = file.type === 'application/pdf'
+
+    if (!declaredPdf && !nameLooksPdf && !looksLikePdf) {
+      return NextResponse.json({ error: 'Invalid file: not a PDF (missing %PDF header).' }, { status: 400 })
+    }
+
+    let pdfDoc: PDFDocument
+    try {
+      pdfDoc = await PDFDocument.load(arrayBuffer)
+    } catch (e) {
+      return NextResponse.json({ error: 'Failed to parse PDF. File may be corrupted.' }, { status: 400 })
+    }
     
     // Extract PDF information
     const pageCount = pdfDoc.getPageCount()
@@ -95,15 +107,13 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    return NextResponse.json({
-      success: true,
-      info: pdfInfo
-    })
+    return NextResponse.json({ success: true, info: pdfInfo })
     
   } catch (error) {
     console.error('PDF info extraction error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to extract PDF information. Please ensure the file is a valid PDF.' 
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({
+      error: 'Failed to extract PDF information. ' + message
     }, { status: 500 })
   }
 }
