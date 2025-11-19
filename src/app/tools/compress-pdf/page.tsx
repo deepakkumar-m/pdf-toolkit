@@ -82,7 +82,8 @@ export default function CompressPdfPage() {
       }
     } catch (error) {
       console.error('Error compressing PDF:', error)
-      alert('Failed to compress PDF. Please try again.')
+      const msg = error instanceof Error ? error.message : 'Failed to compress PDF. Please try again.'
+      alert(msg)
     } finally {
       setIsProcessing(false)
     }
