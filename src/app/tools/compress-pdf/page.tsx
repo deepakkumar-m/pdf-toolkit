@@ -23,14 +23,10 @@ export default function CompressPdfPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [result, setResult] = useState<CompressionResult | null>(null)
   const [pdfInfo, setPdfInfo] = useState<any>(null)
-  const [isLoadingInfo, setIsLoadingInfo] = useState(false)
 
   const handleFileUploaded = async (files: File[]) => {
     const file = files[0]
     setUploadedFile(file)
-    setPdfInfo(null) // Reset previous info
-    setResult(null) // Reset previous result
-    setIsLoadingInfo(true)
     
     // Get PDF info
     try {
@@ -45,26 +41,9 @@ export default function CompressPdfPage() {
       if (response.ok) {
         const data = await response.json()
         setPdfInfo(data.info)
-      } else {
-        const errorText = await response.text()
-        console.error('Failed to get PDF info:', errorText)
-        // Set basic info from file object as fallback
-        setPdfInfo({
-          fileSize: { bytes: file.size },
-          pageCount: '?',
-          dimensions: { average: { width: '?', height: '?' } }
-        })
       }
     } catch (error) {
       console.error('Error getting PDF info:', error)
-      // Set basic info from file object as fallback
-      setPdfInfo({
-        fileSize: { bytes: file.size },
-        pageCount: '?',
-        dimensions: { average: { width: '?', height: '?' } }
-      })
-    } finally {
-      setIsLoadingInfo(false)
     }
   }
 
@@ -87,62 +66,24 @@ export default function CompressPdfPage() {
       const formData = new FormData()
       formData.append('file', uploadedFile)
       formData.append('compressionLevel', compressionLevel)
-      
-      // Use external backend API (Render) or fallback to local API
-      const apiUrl = process.env.NEXT_PUBLIC_COMPRESSION_API_URL
-      const endpoint = apiUrl ? `${apiUrl}/api/compress` : '/api/compress'
-      const response = await fetch(endpoint, { method: 'POST', body: formData })
+      const response = await fetch('/api/compress', { method: 'POST', body: formData })
 
       if (response.ok) {
         const originalSize = Number(response.headers.get('X-Original-Size') || '0')
         const compressedSize = Number(response.headers.get('X-Compressed-Size') || '0')
         const ratioHeader = response.headers.get('X-Compression-Ratio') || '0'
-        const compressionRatio = Number(ratioHeader) // percentage
+        const compressionRatio = Number(ratioHeader) // already percentage number
         const blob = await response.blob()
-
-        // If user selected high and reduction is small (<15%), attempt second pass client recompression
-        if (compressionLevel === 'high' && compressionRatio < 15 && compressedSize < originalSize) {
-          setProgressStatus('Running extra image recompression pass in browser...')
-          setProgress(10)
-          const intermediateFile = new File([blob], `server-compressed-${uploadedFile.name}`, { type: 'application/pdf' })
-          const preset = mapLevelToPreset('high')
-          const res = await compressPDF(
-            intermediateFile,
-            preset,
-            'smart',
-            (p, status) => {
-              // scale progress 10-95
-              const scaled = 10 + (p * 0.85)
-              setProgress(Math.min(95, Math.round(scaled)))
-              setProgressStatus(status)
-            }
-          )
-          const finalBlob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
-          const finalUrl = URL.createObjectURL(finalBlob)
-          // Calculate actual reduction vs ORIGINAL file
-          const finalSize = res.compressedSize
-          const actualRatio = (((originalSize - finalSize) / originalSize) * 100)
-          setResult({
-            success: true,
-            originalSize: originalSize, // Use original uploaded file size
-            compressedSize: finalSize,
-            compressionRatio: actualRatio,
-            downloadUrl: finalUrl
-          })
-          setProgress(100)
-          setProgressStatus('Multi-pass compression complete')
-        } else {
-          const url = URL.createObjectURL(blob)
-          setResult({
-            success: true,
-            originalSize,
+        const url = URL.createObjectURL(blob)
+        setResult({
+          success: true,
+          originalSize,
             compressedSize,
-            compressionRatio,
-            downloadUrl: url
-          })
-          setProgress(100)
-          setProgressStatus('Server compression complete')
-        }
+          compressionRatio,
+          downloadUrl: url
+        })
+        setProgress(100)
+        setProgressStatus('Server compression complete')
       } else {
         // Fallback to client-side compression
         setProgressStatus('Ghostscript unavailable. Falling back to local browser compression...')
@@ -243,7 +184,7 @@ export default function CompressPdfPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Compress PDF</h1>
-              <p className="text-gray-600">Reduce PDF file size with powerful Ghostscript compression. Handles large files reliably.</p>
+              <p className="text-gray-600">Reduce PDF file size. Uses Ghostscript on server when available, otherwise compresses privately in-browser.</p>
             </div>
           </div>
         </div>
@@ -290,47 +231,12 @@ export default function CompressPdfPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {/* File Info - Show first */}
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        <Info className="inline w-4 h-4 mr-1" />
-                        File Information
-                      </label>
-                      {isLoadingInfo ? (
-                        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 text-center">
-                          Loading PDF information...
-                        </div>
-                      ) : pdfInfo ? (
-                        <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span>File Size:</span>
-                            <span className="font-medium">{formatFileSize(pdfInfo.fileSize.bytes)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Pages:</span>
-                            <span className="font-medium">{pdfInfo.pageCount}</span>
-                          </div>
-                            <div className="flex justify-between">
-                              <span>Dimensions:</span>
-                              <span className="font-medium">
-                                {typeof pdfInfo.dimensions.average.width === 'number' 
-                                  ? `${Math.round(pdfInfo.dimensions.average.width)} × ${Math.round(pdfInfo.dimensions.average.height)} pts`
-                                  : 'Unknown'}
-                              </span>
-                            </div>
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 text-center">
-                          Upload a PDF to see file information
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Compression Level */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Compression Level
-                      </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Compression Level */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Compression Level
+                        </label>
                         <div className="space-y-3">
                           {[
                             { value: 'low', label: 'Low', desc: 'Best quality, larger file' },
@@ -355,6 +261,35 @@ export default function CompressPdfPage() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Algorithm selection removed – server (Ghostscript) is always used */}
+
+                      {/* File Info */}
+                      {pdfInfo && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                            <Info className="inline w-4 h-4 mr-1" />
+                            File Information
+                          </label>
+                          <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span>File Size:</span>
+                              <span className="font-medium">{formatFileSize(pdfInfo.fileSize.bytes)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Pages:</span>
+                              <span className="font-medium">{pdfInfo.pageCount}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Dimensions:</span>
+                              <span className="font-medium">
+                                {pdfInfo.dimensions.average.width} × {pdfInfo.dimensions.average.height}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {isProcessing && (
                       <div className="mt-6 bg-blue-50 rounded-lg p-4">
