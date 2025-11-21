@@ -17,7 +17,8 @@ import {
   RotateCw, 
   Scissors, 
   Image,
-  ArrowLeft
+  ArrowLeft,
+  PenTool
 } from 'lucide-react'
 
 const allTools = [
@@ -50,13 +51,23 @@ const allTools = [
     category: 'Optimize',
     popular: true
   },
+  // 4) Sign PDF
+  {
+    id: 'sign-pdf',
+    title: 'Sign PDF',
+    description: 'Add your digital signature to PDF documents by drawing or uploading',
+    icon: PenTool,
+    color: 'bg-purple-100 text-purple-600',
+    category: 'Edit',
+    popular: true
+  },
   // Remaining tools
   {
     id: 'chat-pdf',
     title: 'Chat with PDF',
     description: 'AI-powered document analysis. Ask questions about your PDF content and get intelligent answers',
     icon: MessageSquare,
-    color: 'bg-purple-100 text-purple-600',
+    color: 'bg-amber-100 text-amber-600',
     category: 'AI Tools',
     popular: true,
     comingSoon: true

@@ -154,11 +154,20 @@ export default function ToolsGrid() {
             return (
               <motion.div
                 key={tool.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: index * 0.05,
+                  type: 'spring',
+                  stiffness: 100
+                }}
                 viewport={{ once: true }}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileHover={{ 
+                  y: -8, 
+                  scale: 1.03,
+                  transition: { duration: 0.2 } 
+                }}
                 className="group"
               >
                 <Card 
@@ -171,9 +180,20 @@ export default function ToolsGrid() {
                   aria-disabled={tool.comingSoon ? true : undefined}
                 >
                   {tool.popular && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                      Popular
-                    </div>
+                    <motion.div 
+                      className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs px-2 py-1 rounded-full font-medium"
+                      animate={{ 
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatDelay: 3
+                      }}
+                    >
+                      ⭐ Popular
+                    </motion.div>
                   )}
                   {tool.comingSoon && (
                     <div className="absolute -top-2 -left-2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded-full font-medium">
@@ -181,9 +201,25 @@ export default function ToolsGrid() {
                     </div>
                   )}
                   <CardContent className="p-6 text-center">
-                    <div className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <IconComponent className="w-6 h-6" />
-                    </div>
+                    <motion.div 
+                      className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center mx-auto mb-4 relative overflow-hidden`}
+                      whileHover={{ 
+                        scale: 1.15,
+                        rotate: [0, -5, 5, 0],
+                        transition: { duration: 0.3 }
+                      }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-white"
+                        initial={{ scale: 0, opacity: 0 }}
+                        whileHover={{ 
+                          scale: 2,
+                          opacity: [0, 0.3, 0],
+                          transition: { duration: 0.6 }
+                        }}
+                      />
+                      <IconComponent className="w-6 h-6 relative z-10" />
+                    </motion.div>
                     <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                       {tool.title}
                     </h3>
