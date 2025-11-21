@@ -129,10 +129,17 @@ export default function CompressPdfPage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-4 mb-4">
             <Link 
-              href="/tools" 
+              href="/" 
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
+              Home
+            </Link>
+            <span className="text-gray-300">|</span>
+            <Link 
+              href="/tools" 
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
               Back to Tools
             </Link>
           </div>
