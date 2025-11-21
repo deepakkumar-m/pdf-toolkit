@@ -15,7 +15,8 @@ import {
   Unlock, 
   RotateCw, 
   Scissors, 
-  Image
+  Image,
+  PenTool
 } from 'lucide-react'
 
 const tools = [
@@ -45,13 +46,21 @@ const tools = [
     color: 'bg-red-100 text-red-600',
     popular: true
   },
+  // 4) Sign PDF
+  {
+    id: 'sign-pdf',
+    title: 'Sign PDF',
+    description: 'Add digital signature to your PDF',
+    icon: PenTool,
+    color: 'bg-purple-100 text-purple-600'
+  },
   // Remaining tools
   {
     id: 'chat-pdf',
     title: 'Chat with PDF',
     description: 'AI-powered document analysis and Q&A',
     icon: MessageSquare,
-    color: 'bg-purple-100 text-purple-600',
+    color: 'bg-amber-100 text-amber-600',
     popular: true,
     comingSoon: true
   },
