@@ -41,38 +41,118 @@ A modern, professional PDF toolkit similar to LightPDF, built with Next.js 15, T
 - **File Upload**: react-dropzone
 - **Cloud Storage**: Supabase (optional)
 
+## 🏗️ Architecture
+
+This project uses a **split architecture** for optimal performance:
+
+- **Frontend**: Next.js on Netlify (static + serverless functions)
+- **Backend**: Express.js on Render (PDF compression with Ghostscript)
+
+This setup handles large PDF files (up to 200 MB) without serverless timeout issues.
+
 ## 📦 Installation
+
+### Quick Start (Local Development)
 
 1. **Clone the repository**
    \`\`\`bash
-   git clone https://github.com/your-username/pdf-toolkit.git
+   git clone https://github.com/deepakkumar-m/pdf-toolkit.git
    cd pdf-toolkit
    \`\`\`
 
-2. **Install dependencies**
+2. **Run setup script**
    \`\`\`bash
-   npm install
+   ./setup-dev.sh
    \`\`\`
 
-3. **Set up environment variables**
+3. **Install Ghostscript** (required for compression)
    \`\`\`bash
-   cp .env.example .env.local
+   # macOS
+   brew install ghostscript
+   
+   # Ubuntu/Debian
+   sudo apt-get install ghostscript
+   \`\`\`
+
+4. **Start development servers**
+   
+   Terminal 1 (Backend):
+   \`\`\`bash
+   cd backend
+   npm run dev
    \`\`\`
    
-   Add your API keys:
-   \`\`\`env
-   OPENAI_API_KEY=your_openai_api_key
-   SUPABASE_URL=your_supabase_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   \`\`\`
-
-4. **Run the development server**
+   Terminal 2 (Frontend):
    \`\`\`bash
    npm run dev
    \`\`\`
 
-5. **Open your browser**
-   Visit [http://localhost:3000](http://localhost:3000)
+5. **Open browser**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3001
+
+### Manual Setup
+
+If you prefer manual setup:
+
+1. **Install frontend dependencies**
+   \`\`\`bash
+   npm install
+   \`\`\`
+
+2. **Install backend dependencies**
+   \`\`\`bash
+   cd backend
+   npm install
+   cd ..
+   \`\`\`
+
+3. **Set up environment variables**
+   
+   Frontend (.env.local):
+   \`\`\`bash
+   cp .env.local.example .env.local
+   \`\`\`
+   
+   Edit .env.local:
+   \`\`\`env
+   NEXT_PUBLIC_COMPRESSION_API_URL=http://localhost:3001
+   \`\`\`
+   
+   Backend (backend/.env):
+   \`\`\`bash
+   cd backend
+   cp .env.example .env
+   \`\`\`
+   
+   Edit backend/.env:
+   \`\`\`env
+   NODE_ENV=development
+   PORT=3001
+   FRONTEND_URL=http://localhost:3000
+   \`\`\`
+
+## 🚀 Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions.
+
+### Quick Deploy Summary
+
+**Backend (Render):**
+1. Create new Web Service on Render
+2. Select Docker environment
+3. Set root directory to `backend`
+4. Add environment variables
+5. Deploy
+
+**Frontend (Netlify):**
+1. Connect GitHub repository
+2. Set build command: `npm run build`
+3. Set publish directory: `.next`
+4. Add environment variable: `NEXT_PUBLIC_COMPRESSION_API_URL`
+5. Deploy
+
+**Cost:** ~$7/month (Render Starter + Netlify Free)
 
 ## 🛠️ Development
 

@@ -77,7 +77,10 @@ export default function CompressPdfPage() {
       const formData = new FormData()
       formData.append('file', uploadedFile)
       formData.append('compressionLevel', compressionLevel)
-      const response = await fetch('/api/compress', { method: 'POST', body: formData })
+      
+      // Use external backend API (Render) or fallback to local API
+      const apiUrl = process.env.NEXT_PUBLIC_COMPRESSION_API_URL || '/api'
+      const response = await fetch(`${apiUrl}/api/compress`, { method: 'POST', body: formData })
 
       if (response.ok) {
         const originalSize = Number(response.headers.get('X-Original-Size') || '0')
@@ -229,7 +232,7 @@ export default function CompressPdfPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Compress PDF</h1>
-              <p className="text-gray-600">Reduce PDF file size. Uses Ghostscript on server when available, otherwise compresses privately in-browser.</p>
+              <p className="text-gray-600">Reduce PDF file size with powerful Ghostscript compression. Handles large files reliably.</p>
             </div>
           </div>
         </div>
