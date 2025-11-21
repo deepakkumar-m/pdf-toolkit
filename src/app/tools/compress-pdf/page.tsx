@@ -48,11 +48,21 @@ export default function CompressPdfPage() {
       } else {
         const errorText = await response.text()
         console.error('Failed to get PDF info:', errorText)
-        alert('Failed to read PDF information. The file may be corrupted.')
+        // Set basic info from file object as fallback
+        setPdfInfo({
+          fileSize: { bytes: file.size },
+          pageCount: '?',
+          dimensions: { average: { width: '?', height: '?' } }
+        })
       }
     } catch (error) {
       console.error('Error getting PDF info:', error)
-      alert('Error loading PDF information: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      // Set basic info from file object as fallback
+      setPdfInfo({
+        fileSize: { bytes: file.size },
+        pageCount: '?',
+        dimensions: { average: { width: '?', height: '?' } }
+      })
     } finally {
       setIsLoadingInfo(false)
     }
@@ -79,8 +89,9 @@ export default function CompressPdfPage() {
       formData.append('compressionLevel', compressionLevel)
       
       // Use external backend API (Render) or fallback to local API
-      const apiUrl = process.env.NEXT_PUBLIC_COMPRESSION_API_URL || '/api'
-      const response = await fetch(`${apiUrl}/api/compress`, { method: 'POST', body: formData })
+      const apiUrl = process.env.NEXT_PUBLIC_COMPRESSION_API_URL
+      const endpoint = apiUrl ? `${apiUrl}/api/compress` : '/api/compress'
+      const response = await fetch(endpoint, { method: 'POST', body: formData })
 
       if (response.ok) {
         const originalSize = Number(response.headers.get('X-Original-Size') || '0')
@@ -299,12 +310,14 @@ export default function CompressPdfPage() {
                             <span>Pages:</span>
                             <span className="font-medium">{pdfInfo.pageCount}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Dimensions:</span>
-                            <span className="font-medium">
-                              {Math.round(pdfInfo.dimensions.average.width)} × {Math.round(pdfInfo.dimensions.average.height)} pts
-                            </span>
-                          </div>
+                            <div className="flex justify-between">
+                              <span>Dimensions:</span>
+                              <span className="font-medium">
+                                {typeof pdfInfo.dimensions.average.width === 'number' 
+                                  ? `${Math.round(pdfInfo.dimensions.average.width)} × ${Math.round(pdfInfo.dimensions.average.height)} pts`
+                                  : 'Unknown'}
+                              </span>
+                            </div>
                         </div>
                       ) : (
                         <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 text-center">
