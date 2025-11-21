@@ -26,46 +26,117 @@ export async function POST(req: NextRequest) {
 
     // Save uploaded file to /tmp
     const arrayBuffer = await file.arrayBuffer()
+    const originalBuffer = Buffer.from(arrayBuffer)
     const inputPath = path.join('/tmp', `input-${Date.now()}.pdf`)
     const outputPath = path.join('/tmp', `output-${Date.now()}.pdf`)
-    await writeFile(inputPath, Buffer.from(arrayBuffer))
+    await writeFile(inputPath, originalBuffer)
 
-    // Map compressionLevel to Ghostscript PDFSETTINGS and DPI downsampling
-    // /printer ~ low compression (best quality), /ebook ~ medium, /screen ~ high compression
-    let gsLevel = '/ebook'
-    let dpi = 120
+    // Target minimum reduction percentages
+    const targets: Record<string, number> = { low: 15, medium: 40, high: 65 }
+
+    // Base (pass 1) settings per level (balanced for quality)
+    let gsLevel: string
+    let colorDpi: number
+    let grayDpi: number
+    let monoDpi: number
     if (compressionLevel === 'low') {
       gsLevel = '/printer'
-      dpi = 200
-    } else if (compressionLevel === 'high') {
+      colorDpi = 300
+      grayDpi = 300
+      monoDpi = 1200
+    } else if (compressionLevel === 'medium') {
+      gsLevel = '/ebook'
+      colorDpi = 150
+      grayDpi = 150
+      monoDpi = 300
+    } else { // high
       gsLevel = '/screen'
-      dpi = 72
+      colorDpi = 72
+      grayDpi = 72
+      monoDpi = 150
     }
 
     const gsBin = process.env.GS_EXEC || 'gs'
-    const gsCmd = `${gsBin} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=${gsLevel} \
-      -dCompressFonts=true -dSubsetFonts=true \
-      -dDetectDuplicateImages=true \
-      -dDownsampleColorImages=true -dColorImageDownsampleType=/Bicubic -dColorImageResolution=${dpi} \
-      -dDownsampleGrayImages=true -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=${dpi} \
-      -dDownsampleMonoImages=true -dMonoImageDownsampleType=/Subsample -dMonoImageResolution=${dpi} \
-      -dAutoRotatePages=/None -dUseFlateCompression=true \
-      -dNOPAUSE -dQUIET -dBATCH -sOutputFile=${outputPath} ${inputPath}`
 
-    await new Promise((resolve, reject) => {
-      exec(gsCmd, (error) => (error ? reject(error) : resolve(undefined)))
-    })
+    async function runPass(inPath: string, outPath: string, _color: number, _gray: number, _mono: number, level: string) {
+      const cmd = `${gsBin} -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=${level} \
+        -dCompressFonts=true -dSubsetFonts=true -dEmbedAllFonts=false \
+        -dDetectDuplicateImages=true -dFastWebView=true \
+        -dDownsampleColorImages=true -dColorImageDownsampleType=/Bicubic -dColorImageResolution=${_color} \
+        -dDownsampleGrayImages=true -dGrayImageDownsampleType=/Bicubic -dGrayImageResolution=${_gray} \
+        -dDownsampleMonoImages=true -dMonoImageDownsampleType=/Bicubic -dMonoImageResolution=${_mono} \
+        -dColorImageDownsampleThreshold=1.0 -dGrayImageDownsampleThreshold=1.0 \
+        -dAutoFilterColorImages=false -dColorImageFilter=/DCTEncode \
+        -dAutoFilterGrayImages=false -dGrayImageFilter=/DCTEncode \
+        -dAutoRotatePages=/None -dUseFlateCompression=true \
+        -dNOPAUSE -dQUIET -dBATCH -sOutputFile=${outPath} ${inPath}`
+      await new Promise((resolve, reject) => exec(cmd, (error) => (error ? reject(error) : resolve(undefined))))
+    }
 
-    const compressedBuffer = await readFile(outputPath)
+    // First pass
+    await runPass(inputPath, outputPath, colorDpi, grayDpi, monoDpi, gsLevel)
+
+    let compressedBuffer = await readFile(outputPath)
     const originalSize = file.size
-    const compressedSize = compressedBuffer.length
-    const compressionRatio = (((originalSize - compressedSize) / originalSize) * 100).toFixed(1)
+    let finalBuffer = compressedBuffer
+    let compressedSize = compressedBuffer.length
+    let compressionRatioNum = ((originalSize - compressedSize) / originalSize) * 100
+    let compressionRatio = (compressionRatioNum).toFixed(1)
+    let note = ''
+    let passes = 1
+
+    // If below target and not already extremely aggressive, attempt second pass with stronger settings.
+    if (compressionRatioNum < targets[compressionLevel]) {
+      const secondInput = outputPath // reuse
+      const secondOutput = path.join('/tmp', `output2-${Date.now()}.pdf`)
+      let secondLevel = gsLevel
+      let c2 = colorDpi
+      let g2 = grayDpi
+      let m2 = monoDpi
+      if (compressionLevel === 'low') {
+        // Mildly stronger still prioritizing quality
+        c2 = Math.min(colorDpi, 225)
+        g2 = Math.min(grayDpi, 225)
+        m2 = Math.min(monoDpi, 600)
+      } else if (compressionLevel === 'medium') {
+        // Push further to approach ~50%
+        secondLevel = '/screen'
+        c2 = 110
+        g2 = 110
+        m2 = 220
+      } else if (compressionLevel === 'high') {
+        // Extreme - already using /screen; drop DPI more
+        c2 = 36
+        g2 = 36
+        m2 = 72
+      }
+      try {
+        await runPass(secondInput, secondOutput, c2, g2, m2, secondLevel)
+        compressedBuffer = await readFile(secondOutput)
+        finalBuffer = compressedBuffer
+        compressedSize = compressedBuffer.length
+        compressionRatioNum = ((originalSize - compressedSize) / originalSize) * 100
+        compressionRatio = compressionRatioNum.toFixed(1)
+        passes = 2
+        await unlink(secondOutput).catch(() => {})
+      } catch (e) {
+        note = 'second-pass-failed'
+      }
+    }
+
+    // If compression produced a larger file, fall back to original
+    if (compressedSize >= originalSize) {
+      finalBuffer = originalBuffer
+      compressedSize = originalSize
+      compressionRatio = '0.0'
+      note = 'already-optimized'
+    }
 
     // Clean up temp files
     await unlink(inputPath).catch(() => {})
     await unlink(outputPath).catch(() => {})
 
-    return new NextResponse(Buffer.from(compressedBuffer), {
+    return new NextResponse(Buffer.from(finalBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="compressed-${file.name}"`,
@@ -73,6 +144,9 @@ export async function POST(req: NextRequest) {
         'X-Compressed-Size': compressedSize.toString(),
         'X-Compression-Ratio': compressionRatio.toString(),
         'X-Compression-Effective': (compressedSize < originalSize).toString(),
+        ...(note ? { 'X-Compression-Note': note } : {}),
+        'X-Compression-Passes': passes.toString(),
+        'X-Compression-Target-Min': targets[compressionLevel].toString(),
       },
     })
   } catch (error) {

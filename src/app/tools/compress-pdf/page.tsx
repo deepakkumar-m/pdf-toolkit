@@ -7,13 +7,12 @@ import { ArrowLeft, Minimize2, Download, Settings, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import FileUpload from '@/components/FileUpload'
-import { compressPDF } from '@/lib/pdfCompression'
 
 interface CompressionResult {
   success: boolean
   originalSize: number
   compressedSize: number
-  compressionRatio: number
+  compressionRatio: string
   downloadUrl: string
 }
 
@@ -47,98 +46,44 @@ export default function CompressPdfPage() {
     }
   }
 
-  const [progress, setProgress] = useState(0)
-  const [progressStatus, setProgressStatus] = useState('')
-
-  const mapLevelToPreset = (level: 'low' | 'medium' | 'high'): 'high-quality' | 'balanced' | 'small-size' => {
-    if (level === 'low') return 'high-quality'
-    if (level === 'medium') return 'balanced'
-    return 'small-size'
-  }
-
   const handleCompress = async () => {
     if (!uploadedFile) return
+
     setIsProcessing(true)
-    setResult(null)
-    setProgressStatus('Using Ghostscript server compression...')
-    setProgress(0)
+
     try {
       const formData = new FormData()
       formData.append('file', uploadedFile)
       formData.append('compressionLevel', compressionLevel)
-      const response = await fetch('/api/compress', { method: 'POST', body: formData })
+
+      const response = await fetch('/api/compress', {
+        method: 'POST',
+        body: formData,
+      })
 
       if (response.ok) {
-        const originalSize = Number(response.headers.get('X-Original-Size') || '0')
-        const compressedSize = Number(response.headers.get('X-Compressed-Size') || '0')
-        const ratioHeader = response.headers.get('X-Compression-Ratio') || '0'
-        const compressionRatio = Number(ratioHeader) // already percentage number
         const blob = await response.blob()
         const url = URL.createObjectURL(blob)
+        
+        const originalSize = parseInt(response.headers.get('X-Original-Size') || '0')
+        const compressedSize = parseInt(response.headers.get('X-Compressed-Size') || '0')
+        const compressionRatio = response.headers.get('X-Compression-Ratio') || '0'
+        
         setResult({
           success: true,
           originalSize,
-            compressedSize,
+          compressedSize,
           compressionRatio,
           downloadUrl: url
         })
-        setProgress(100)
-        setProgressStatus('Server compression complete')
       } else {
-        // Fallback to client-side compression
-        setProgressStatus('Ghostscript unavailable. Falling back to local browser compression...')
-        const preset = mapLevelToPreset(compressionLevel)
-        const res = await compressPDF(
-          uploadedFile,
-          preset,
-          'auto',
-          (p, status) => {
-            setProgress(p)
-            setProgressStatus(status)
-          }
-        )
-        const blob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
-        const url = URL.createObjectURL(blob)
-        setResult({
-          success: true,
-          originalSize: res.originalSize,
-          compressedSize: res.compressedSize,
-          compressionRatio: res.compressionRatio,
-          downloadUrl: url
-        })
-        setProgress(100)
-        setProgressStatus('Local compression complete')
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Compression failed')
       }
-    } catch (e) {
-      console.error('Compression error:', e)
-      try {
-        // Attempt client fallback if server path threw before response.ok check
-        setProgressStatus('Error on server. Attempting local compression...')
-        const preset = mapLevelToPreset(compressionLevel)
-        const res = await compressPDF(
-          uploadedFile,
-          preset,
-          'auto',
-          (p, status) => {
-            setProgress(p)
-            setProgressStatus(status)
-          }
-        )
-        const blob = new Blob([res.compressedBytes as unknown as BlobPart], { type: 'application/pdf' })
-        const url = URL.createObjectURL(blob)
-        setResult({
-          success: true,
-          originalSize: res.originalSize,
-          compressedSize: res.compressedSize,
-          compressionRatio: res.compressionRatio,
-          downloadUrl: url
-        })
-        setProgress(100)
-        setProgressStatus('Local compression complete')
-      } catch (fallbackErr) {
-        console.error('Fallback compression failed:', fallbackErr)
-        alert('Compression failed: ' + (fallbackErr instanceof Error ? fallbackErr.message : 'Unknown error'))
-      }
+    } catch (error) {
+      console.error('Error compressing PDF:', error)
+      const msg = error instanceof Error ? error.message : 'Failed to compress PDF. Please try again.'
+      alert(msg)
     } finally {
       setIsProcessing(false)
     }
@@ -184,7 +129,7 @@ export default function CompressPdfPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Compress PDF</h1>
-              <p className="text-gray-600">Reduce PDF file size. Uses Ghostscript on server when available, otherwise compresses privately in-browser.</p>
+              <p className="text-gray-600">Reduce PDF file size without losing quality</p>
             </div>
           </div>
         </div>
@@ -239,9 +184,9 @@ export default function CompressPdfPage() {
                         </label>
                         <div className="space-y-3">
                           {[
-                            { value: 'low', label: 'Low', desc: 'Best quality, larger file' },
-                            { value: 'medium', label: 'Medium', desc: 'Balanced size & quality' },
-                            { value: 'high', label: 'High', desc: 'Smaller file, more compression' }
+                            { value: 'low', label: 'Low', desc: 'Approx. 25% reduction (best quality)' },
+                            { value: 'medium', label: 'Medium', desc: 'Approx. 50% reduction (balanced)' },
+                            { value: 'high', label: 'High', desc: 'Approx. 75% reduction (smallest file)' }
                           ].map((level) => (
                             <div key={level.value} className="flex items-center">
                               <input
@@ -291,20 +236,7 @@ export default function CompressPdfPage() {
                       )}
                     </div>
 
-                    {isProcessing && (
-                      <div className="mt-6 bg-blue-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700">{progressStatus}</span>
-                          <span className="text-sm font-medium text-blue-600">{progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
+                    {/* Progress UI removed – handled by server */}
 
                     <div className="mt-6">
                       <Button
@@ -357,11 +289,16 @@ export default function CompressPdfPage() {
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {result.compressionRatio.toFixed(1)}%
+                          {Number(result.compressionRatio).toFixed(1)}%
                         </div>
                         <div className="text-sm text-gray-500">Reduction</div>
                       </div>
                     </div>
+                    {Number(result.compressionRatio) <= 0 && (
+                      <div className="mb-4 text-sm text-yellow-700 bg-yellow-50 border border-yellow-100 rounded-md p-3">
+                        This PDF already appears optimally compressed at this level. The original file was returned unchanged.
+                      </div>
+                    )}
 
                     <Button onClick={downloadCompressed}>
                       <Download className="w-4 h-4 mr-2" />
