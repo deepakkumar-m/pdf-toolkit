@@ -20,6 +20,7 @@ export default function CompressPdfPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [compressionLevel, setCompressionLevel] = useState<'low' | 'medium' | 'high'>('medium')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<CompressionResult | null>(null)
   const [pdfInfo, setPdfInfo] = useState<any>(null)
 
@@ -50,6 +51,15 @@ export default function CompressPdfPage() {
     if (!uploadedFile) return
 
     setIsProcessing(true)
+    setProgress(0)
+
+    // Simulate progress for better UX
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return prev
+        return prev + Math.random() * 15
+      })
+    }, 500)
 
     try {
       const formData = new FormData()
@@ -60,6 +70,9 @@ export default function CompressPdfPage() {
         method: 'POST',
         body: formData,
       })
+
+      clearInterval(progressInterval)
+      setProgress(100)
 
       if (response.ok) {
         const blob = await response.blob()
@@ -86,6 +99,7 @@ export default function CompressPdfPage() {
       alert(msg)
     } finally {
       setIsProcessing(false)
+      setProgress(0)
     }
   }
 
@@ -236,7 +250,21 @@ export default function CompressPdfPage() {
                       )}
                     </div>
 
-                    {/* Progress UI removed – handled by server */}
+                    {/* Progress Bar */}
+                    {isProcessing && (
+                      <div className="mt-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">Compressing PDF...</span>
+                          <span className="text-sm font-medium text-red-600">{Math.round(progress)}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div 
+                            className="bg-red-600 h-2.5 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-6">
                       <Button
