@@ -2,6 +2,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { Github, Linkedin, Mail, Sparkles } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -163,19 +164,91 @@ export default function Footer() {
 
         {/* Divider */}
         <motion.div 
-          className="border-t border-gray-800 pt-6"
+          className="border-t border-gray-800 pt-8"
           initial={{ opacity: 0, scaleX: 0 }}
           whileInView={{ opacity: 1, scaleX: 1 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, delay: 0.9 }}
         >
-          <div className="flex justify-center items-center">
+          {/* Company Info and Links Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Company Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 1.0 }}
+            >
+              <h3 className="text-white font-semibold text-lg mb-3">PDF Toolkit</h3>
+              <p className="text-gray-400 text-sm mb-2">Version 1.1</p>
+              <p className="text-gray-400 text-sm">
+                Professional PDF tools for everyone
+              </p>
+            </motion.div>
+
+            {/* Company Links */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 1.1 }}
+            >
+              <h3 className="text-white font-semibold text-sm mb-3">Company</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/about" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    FAQ
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:deepakkumarmanivannan@hotmail.com" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </motion.div>
+
+            {/* Legal Links */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 1.2 }}
+            >
+              <h3 className="text-white font-semibold text-sm mb-3">Legal</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    Licensing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    Terms and Conditions
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+              </ul>
+            </motion.div>
+          </div>
+
+          {/* Copyright */}
+          <div className="flex justify-center items-center pt-6 border-t border-gray-800">
             <motion.p 
               className="text-gray-400 text-sm"
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: 1.1 }}
+              transition={{ duration: 0.6, delay: 1.3 }}
             >
               © 2025 PDF Toolkit. All rights reserved.
             </motion.p>
