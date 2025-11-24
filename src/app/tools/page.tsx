@@ -75,12 +75,11 @@ const allTools = [
   {
     id: 'edit-pdf',
     title: 'Edit PDF',
-    description: 'Add text, images, shapes, and annotations to your PDF documents online',
+    description: 'Edit existing PDF text tokens (experimental)',
     icon: Edit3,
     color: 'bg-green-100 text-green-600',
     category: 'Edit',
-    popular: true,
-    comingSoon: true
+    popular: true
   },
   {
     id: 'pdf-to-jpg',

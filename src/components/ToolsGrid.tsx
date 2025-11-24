@@ -67,11 +67,10 @@ const tools = [
   {
     id: 'edit-pdf',
     title: 'Edit PDF',
-    description: 'Add text, images, and annotations',
+    description: 'Edit existing PDF text (experimental)',
     icon: Edit3,
     color: 'bg-green-100 text-green-600',
-    popular: true,
-    comingSoon: true
+    popular: true
   },
   {
     id: 'ocr-pdf',
